@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<alloy>
+
+<view>
+
+<defaultnode/>
+
+<defaultedge/>
+
+<node>
+   <type name="Int"/>
+   <type name="Node"/>
+   <type name="Nope"/>
+   <type name="String"/>
+   <type name="univ"/>
+   <type name="Yep"/>
+   <type name="ordering/Ord"/>
+   <type name="seq/Int"/>
+</node>
+
+<node shape="Dbl Octagon" color="Red">
+   <set name="this/TransactionCoordinator" type="Node"/>
+</node>
+
+<node shape="Inv Triangle" color="Gray">
+   <type name="Vote"/>
+</node>
+
+<node style="Dashed" shape="Circle" color="Green">
+   <type name="Value"/>
+</node>
+
+<edge attribute="yes">
+   <relation name="proposed"> <type name="Node"/> <type name="Value"/> </relation>
+</edge>
+
+<edge visible="no" attribute="yes">
+   <relation name="proposals_sent"> <type name="Node"/> <type name="Node"/> </relation>
+   <relation name="responses_recv"> <type name="Node"/> <type name="Vote"/> <type name="Node"/> </relation>
+</edge>
+
+</view>
+
+</alloy>
