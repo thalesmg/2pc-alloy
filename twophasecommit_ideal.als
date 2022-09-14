@@ -111,7 +111,7 @@ fact step {
 
 pred fairness {
    all tc: TransactionCoordinator, n: Node | {
-      (eventually always historically (n not in tc.proposals_sent)) => (always eventually some v: Value | send_proposal[v, n])
+      (eventually historically (n not in tc.proposals_sent)) => (always eventually some v: Value | send_proposal[v, n])
       (eventually always (n in tc.proposals_sent)) => (always eventually some v: Vote | send_response[v, n])
    }
 }
