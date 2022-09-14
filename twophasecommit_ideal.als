@@ -35,8 +35,6 @@ pred stutter {
 pred send_proposal[v: Value, n : Node] {
    all tc : TransactionCoordinator | {
       n not in tc.proposals_sent
-      /* tc.val' = v */
-      /* tc.proposed' = v */
       tc.val = v
       tc.proposed' = v
       tc.proposals_sent' = tc.proposals_sent + n
@@ -88,10 +86,7 @@ pred send_decision_commit[n: Node] {
    n.val' = n.proposed
    all m : Node - n | {
       m.val' = m.val
-      /* m.proposed' = m.proposed */
    }
-   /* no n.proposed' */
-   /* n.proposed' = n.proposed */
    proposed' = proposed - n->Value
 
    voted' = voted
@@ -117,13 +112,6 @@ pred fairness {
 }
 
 pred ReachesConclusion {
-   eventually (
-     (all n : Node | send_decision_commit[n]) or
-     (all n : Node | send_decision_abort[n])
-   )
-}
-
-pred ReachesConclusion2 {
    eventually {
      Node in TransactionCoordinator.proposals_sent
      all m : Node | some TransactionCoordinator.responses_recv.m
@@ -132,7 +120,7 @@ pred ReachesConclusion2 {
 }
 
 pred Commited {
-   ReachesConclusion2
+   ReachesConclusion
    all m : Node | m.voted = Yep
 }
 
@@ -140,30 +128,20 @@ assert ReachesConclusion {
    fairness => ReachesConclusion
 }
 
-assert ReachesConclusion2 {
-   fairness => ReachesConclusion2
-}
-
 assert CommitMeansAgreement {
    fairness => {
-      ReachesConclusion2
+      ReachesConclusion
       Commited
       all disj n1, n2 : Node | n1.val = n2.val
    }
 }
 
 check ReachesConclusion
-check ReachesConclusion2
 check CommitMeansAgreement
 
 run example {
    #Node > 1
    eventually ReachesConclusion
-}
-
-run example2 {
-   #Node > 1
-   eventually ReachesConclusion2
 }
 
 /* run commit_example { */
@@ -180,7 +158,7 @@ run same_votes {
 run commit_example {
    #Node > 1
    eventually {
-      ReachesConclusion2
+      ReachesConclusion
       all m : Node | m.voted = Yep
    }
 }
@@ -188,7 +166,7 @@ run commit_example {
 run abort_example {
    #Node > 1
    eventually {
-      ReachesConclusion2
+      ReachesConclusion
       some m : Node | m.voted = Nope
    }
 }
