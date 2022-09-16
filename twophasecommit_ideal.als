@@ -113,11 +113,9 @@ pred fairness {
 }
 
 pred ReachesConclusion {
-   /* eventually { */
-     Node = TransactionCoordinator.proposals_sent
-     all m : Node | some TransactionCoordinator.responses_recv.m
-     no proposed
-   /* } */
+   Node = TransactionCoordinator.proposals_sent
+   all m : Node | some TransactionCoordinator.responses_recv.m
+   no proposed
 }
 
 pred Commited {
@@ -126,19 +124,15 @@ pred Commited {
 }
 
 assert ReachesConclusion {
-   fairness => ReachesConclusion
+   fairness => eventually ReachesConclusion
 }
 
 assert CommitMeansAgreement {
-   fairness => {
-      ReachesConclusion
-      Commited
-      all disj n1, n2 : Node | n1.val = n2.val
-   }
+   Commited => all disj n1, n2 : Node | n1.val = n2.val
 }
 
 check ReachesConclusion for 3 but 1..15 steps
-check CommitMeansAgreement
+check CommitMeansAgreement for 3 but 1..15 steps
 
 run example {
    #Node > 1
