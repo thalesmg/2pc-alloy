@@ -164,7 +164,7 @@ check CommitMeansAgreement
 run example {
    #TransactionCoordinator = 2
    #Node = 3
-   eventually ReachesConclusion
+   /* eventually ReachesConclusion */
    /* eventually some tc: TransactionCoordinator, n: Node, v: Value | send_proposal[tc, v, n] */
 } for 1..20 steps
 

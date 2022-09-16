@@ -106,17 +106,18 @@ fact step {
 
 pred fairness {
    all tc: TransactionCoordinator, n: Node | {
-      (eventually historically (n not in tc.proposals_sent)) => (always eventually some v: Value | send_proposal[v, n])
-      (eventually always (n in tc.proposals_sent)) => (always eventually some v: Vote | send_response[v, n])
+      (eventually historically (n not in tc.proposals_sent)) => (eventually some v: Value | send_proposal[v, n])
+      (eventually always (n in tc.proposals_sent)) => (eventually some v: Vote | send_response[v, n])
+      (eventually always (n in Vote.(tc.responses_recv))) => (eventually (send_decision_abort[n] or send_decision_commit[n]))
    }
 }
 
 pred ReachesConclusion {
-   eventually {
-     Node in TransactionCoordinator.proposals_sent
+   /* eventually { */
+     Node = TransactionCoordinator.proposals_sent
      all m : Node | some TransactionCoordinator.responses_recv.m
      no proposed
-   }
+   /* } */
 }
 
 pred Commited {
@@ -136,7 +137,7 @@ assert CommitMeansAgreement {
    }
 }
 
-check ReachesConclusion
+check ReachesConclusion for 3 but 1..15 steps
 check CommitMeansAgreement
 
 run example {
