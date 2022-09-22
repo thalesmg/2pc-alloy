@@ -16,12 +16,6 @@
    <type name="Yep"/>
    <type name="ordering/Ord"/>
    <type name="seq/Int"/>
-   <set name="$StuttersWithoutFairness_n" type="Node"/>
-   <set name="$StuttersWithoutFairness_tc" type="Node"/>
-</node>
-
-<node shape="Inv Triangle" color="Gray">
-   <type name="Vote"/>
 </node>
 
 <node showlabel="no" shape="Dbl Octagon" color="Red">
@@ -30,6 +24,10 @@
 
 <node style="Dashed" shape="Circle" color="Green">
    <type name="Value"/>
+</node>
+
+<node visible="no" shape="Inv Triangle" color="Gray">
+   <type name="Vote"/>
 </node>
 
 <edge attribute="yes">

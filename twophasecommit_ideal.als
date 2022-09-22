@@ -32,63 +32,66 @@ pred stutter {
    responses_recv' = responses_recv
 }
 
-pred send_proposal[v: Value, n : Node] {
-   all tc : TransactionCoordinator | {
-      n not in tc.proposals_sent
-      tc.val = v
-      tc.proposed' = v
-      tc.proposals_sent' = tc.proposals_sent + n
-   }
+pred send_proposal[tc: TransactionCoordinator, v: Value, n : Node] {
+   // precondition: this node did not receive a proposal yet
+   n not in tc.proposals_sent
 
+   // effect
+   tc.val = v
+   tc.proposed' = v
+   tc.proposals_sent' = tc.proposals_sent + n
    proposed' = proposed + n->v
+
+   // frame conditions
    val' = val
    voted' = voted
    responses_recv' = responses_recv
 }
 
-pred send_response[vote: Vote, n : Node] {
-   // this node has not yet voted
+pred send_response[tc: TransactionCoordinator, vote: Vote, n : Node] {
+   // preconditions
    no n.voted
-   // this node must have received a proposal
    some n.proposed
 
+   // effect
    n.voted' = vote
-   all tc : TransactionCoordinator | {
-      tc.responses_recv' = tc.responses_recv + vote->n
-   }
+   tc.responses_recv' = tc.responses_recv + vote->n
 
+   // frame conditions
    val' = val
    proposed' = proposed
    proposals_sent' = proposals_sent
    all m : Node - n | m.voted' = m.voted
 }
 
-pred send_decision_abort[n: Node] {
-   all tc : TransactionCoordinator | {
-      all m : Node | some tc.responses_recv.m
-      some m : Node | tc.responses_recv.m = Nope
-   }
+pred send_decision_abort[tc: TransactionCoordinator, n: Node] {
+   // preconditions
+   all m : Node | some tc.responses_recv.m
+   some m : Node | tc.responses_recv.m = Nope
 
+   // effect
    val' = val
    proposed' = proposed - n->Value
+
+   // frame conditions
    voted' = voted
    proposals_sent' = proposals_sent
    responses_recv' = responses_recv
 }
 
-pred send_decision_commit[n: Node] {
-   all tc : TransactionCoordinator | {
-      /* all m : Node | some tc.responses_recv.m */
-      all m : Node | tc.responses_recv.m = Yep
-   }
+pred send_decision_commit[tc: TransactionCoordinator, n: Node] {
+   // preconditions
+   all m : Node | tc.responses_recv.m = Yep
    some n.proposed
 
+   // effect
    n.val' = n.proposed
    all m : Node - n | {
       m.val' = m.val
    }
    proposed' = proposed - n->Value
 
+   // frame conditions
    voted' = voted
    proposals_sent' = proposals_sent
    responses_recv' = responses_recv
@@ -97,18 +100,28 @@ pred send_decision_commit[n: Node] {
 fact step {
    always (
      stutter or
-     (some v: Value, n : Node | send_proposal[v, n]) or
-     (some vote: Vote, n : Node | send_response[vote, n]) or
-     (some n : Node | send_decision_abort[n]) or
-     (some n : Node | send_decision_commit[n])
+     (some v: Value, n : Node, tc: TransactionCoordinator |
+        send_proposal[tc, v, n]) or
+     (some vote: Vote, n : Node, tc: TransactionCoordinator |
+        send_response[tc, vote, n]) or
+     (some n: Node, tc: TransactionCoordinator |
+        send_decision_abort[tc, n]) or
+     (some n: Node, tc: TransactionCoordinator |
+        send_decision_commit[tc, n])
    )
 }
 
 pred fairness {
    all tc: TransactionCoordinator, n: Node | {
-      (eventually historically (n not in tc.proposals_sent)) => (eventually some v: Value | send_proposal[v, n])
-      (eventually always (n in tc.proposals_sent)) => (eventually some v: Vote | send_response[v, n])
-      (eventually always (n in Vote.(tc.responses_recv))) => (eventually (send_decision_abort[n] or send_decision_commit[n]))
+      (eventually historically (n not in tc.proposals_sent))
+        => (eventually some v: Value, tc: TransactionCoordinator |
+            send_proposal[tc, v, n])
+      (eventually always (n in tc.proposals_sent))
+        => (eventually some v: Vote, tc: TransactionCoordinator |
+            send_response[tc, v, n])
+      (eventually always (n in Vote.(tc.responses_recv)))
+        => (eventually some tc: TransactionCoordinator |
+            (send_decision_abort[tc, n] or send_decision_commit[tc, n]))
    }
 }
 
@@ -123,6 +136,10 @@ pred Commited {
    all m : Node | m.voted = Yep
 }
 
+assert ReachesConclusion0 {
+   eventually ReachesConclusion
+}
+
 assert ReachesConclusion {
    fairness => eventually ReachesConclusion
 }
@@ -131,8 +148,13 @@ assert CommitMeansAgreement {
    Commited => all disj n1, n2 : Node | n1.val = n2.val
 }
 
+check ReachesConclusion0 for 3 but 1..15 steps
 check ReachesConclusion for 3 but 1..15 steps
 check CommitMeansAgreement for 3 but 1..15 steps
+
+run example0 {
+   #Node > 1
+}
 
 run example {
    #Node > 1
